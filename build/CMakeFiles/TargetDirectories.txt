@@ -1,0 +1,7 @@
+/Applications/GEANT4/geant4_10_05_p01/NDGAr/build/CMakeFiles/install/local.dir
+/Applications/GEANT4/geant4_10_05_p01/NDGAr/build/CMakeFiles/rebuild_cache.dir
+/Applications/GEANT4/geant4_10_05_p01/NDGAr/build/CMakeFiles/edit_cache.dir
+/Applications/GEANT4/geant4_10_05_p01/NDGAr/build/CMakeFiles/install/strip.dir
+/Applications/GEANT4/geant4_10_05_p01/NDGAr/build/CMakeFiles/install.dir
+/Applications/GEANT4/geant4_10_05_p01/NDGAr/build/CMakeFiles/list_install_components.dir
+/Applications/GEANT4/geant4_10_05_p01/NDGAr/build/CMakeFiles/opTPC.dir
