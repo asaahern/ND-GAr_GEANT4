@@ -45,6 +45,8 @@
 #include "G4OpticalSurface.hh"
 #include "G4SystemOfUnits.hh"
 #include "Materials.hh"
+#include "G4Material.hh"
+#include "G4Element.hh"
 #include "G4MaterialPropertiesTable.hh"
 #include "G4UnitsTable.hh"
 #include "G4VisAttributes.hh"
@@ -63,9 +65,6 @@ DetectorConstruction::DetectorConstruction()
 	base_radius     = 2.5*m;
 	steel_thickness = 10.*mm;
 	cath_thickness  = 10.*mm;
-
-	disable_gas_pure = true;
-	disable_gas_mix = true;
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -109,27 +108,68 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 	G4double efficiency_cath[num_Rcath] = {1.0 , 1.0};
 	G4double reflectivity_cath[num_Rcath] = {0.0, 0.0};
 
-
 	G4Material* steel_mat = nist->FindOrBuildMaterial("G4_STAINLESS-STEEL");
 	const G4int num_Rsteel = 2;
 	G4double ephoton_steel[num_Rsteel] = {1.0*eV, 10.0*eV};
-	G4double reflectivity_steel[num_Rsteel] = {0., 0.}; 
+	G4double reflectivity_steel[num_Rsteel] = {0.0, 0.0}; 
+
+	G4Material* tef_mat = nist->FindOrBuildMaterial("G4_TEFLON");
+	const G4int num_Rtef = 2;
+	G4double ephoton_tef[num_Rtef] = {1.0*eV, 10.0*eV};
+	G4double reflectivity_tef[num_Rtef] = {0.95, 0.95}; 
 
 
 	// gas
-	G4int ncomponents;
-	G4double fractionmass;
+	G4int ncomponents, natoms;
+	G4double fractionmass, z;
 
 	G4double pressure = 10.*bar;
 	G4double temperature = 298.15*kelvin;
-	G4double Ar_dens  = 1.7836; // [mg/cm3]
-	G4double CH4_dens = 0.7174; // [mg/cm3]
-	G4double Ar_mass  = 39.948;
-	G4double CH4_mass = 16.04; 
+
+	G4double C_mass   = 12.01*g/mole;
+	G4double F_mass   = 18.998*g/mole;
+	G4double Ar_mass  = 39.948*g/mole;
+	G4double CH4_mass = 16.04*g/mole;
+	G4double CF4_mass = C_mass + 4*F_mass;
+	
+	G4double Ar_dens  = 1.7836*mg/cm3;
+	G4double CH4_dens = 0.7174*mg/cm3;
+	G4double CF4_dens = 3.72*mg/cm3;
 
 
 	G4cout << "TPC is full of pure Ar" << G4endl;
 	G4Material* gas_mat = nist->ConstructNewGasMaterial("Ar_pure", "G4_Ar", temperature, pressure);
+
+/*
+	G4cout << "TPC is full of Argon/CH4 90/10" << G4endl;
+	G4double Ar_frac = 0.9;
+	G4double CH4_frac = 0.1;
+	G4double gas_dens = Ar_dens*Ar_frac + CH4_dens*CH4_frac;
+
+ 	G4Material* Argon = nist->FindOrBuildMaterial("G4_Ar");
+	G4Material* Methane= nist->FindOrBuildMaterial("G4_METHANE");
+	G4Material* gas_mat = new G4Material("Ar_CH4", gas_dens, ncomponents=2, kStateGas, temperature, pressure);
+	gas_mat->AddMaterial(Argon,   fractionmass=(Ar_mass*Ar_frac/(Ar_mass*Ar_frac+CH4_mass*CH4_frac)));
+	gas_mat->AddMaterial(Methane, fractionmass=(CH4_mass*CH4_frac/(Ar_mass*Ar_frac+CH4_mass*CH4_frac)));
+
+
+	G4cout << "TPC is full of Argon/CF4 99/1" << G4endl;
+	G4double Ar_frac = 0.99;
+	G4double CF4_frac = 0.01;
+	G4double gas_dens = Ar_dens*Ar_frac + CF4_dens*CF4_frac;
+
+	G4Element* elC = new G4Element("Carbon", "C", z=6., C_mass);
+	G4Element* elF = new G4Element("Fluorine", "F", z=9., F_mass);  
+	G4Material* CF4 = new G4Material("CF4", CF4_dens, ncomponents=2, kStateGas, temperature, pressure);
+	CF4->AddElement(elC, natoms=1);
+	CF4->AddElement(elF, natoms=4);
+
+	G4Material* Argon = nist->FindOrBuildMaterial("G4_Ar");
+	G4Material* gas_mat = new G4Material("Ar_CF4", gas_dens, ncomponents=2, kStateGas, temperature, pressure);
+	gas_mat->AddMaterial(Argon, fractionmass=(Ar_mass*Ar_frac/(Ar_mass*Ar_frac+CF4_mass*CF4_frac)));
+	gas_mat->AddMaterial(CF4, fractionmass=(CF4_mass*CF4_frac/(Ar_mass*Ar_frac+CF4_mass*CF4_frac)));
+*/
+
 	// include refractive index of the gas as a function of the photon energy
 	const G4int num_gas = 2;
 	G4double ephoton_gas[num_gas] = { 0.1*eV, 10*eV};
@@ -138,26 +178,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 	gas_MPT->AddProperty("RINDEX", ephoton_gas, refractiveIndex_gas, num_gas)->SetSpline(true);
 	gas_mat->SetMaterialPropertiesTable(gas_MPT);
 
-/*
-	if (!disable_gas_mix) { // Argon 90% / CH4 10%
-		G4cout << "TPC is full of Argon/CH4 90/10" << G4endl;
-		G4double Ar_frac = 0.9;
-		G4double CH4_frac = 0.1;
-		G4double gas_dens = (Ar_dens*Ar_frac + CH4_dens*CH4_frac)*mg/cm3;
 
-
- 		G4Material* Argon = nist->FindOrBuildMaterial("G4_Ar");
-		G4Material* Methane= nist->FindOrBuildMaterial("G4_METHANE");
-
-		G4Material* gas_mat = new G4Material("Ar_CH4", gas_dens, ncomponents=2);
-		gas_mat->AddMaterial(Argon,   fractionmass=(Ar_mass*Ar_frac/(Ar_mass*Ar_frac+CH4_mass*CH4_frac)));
-		gas_mat->AddMaterial(Methane, fractionmass=(CH4_mass*CH4_frac/(Ar_mass*Ar_frac+CH4_mass*CH4_frac)));		}
-	}
-	else{
-		G4Material* gas_mat = galactic;
-		G4cout << "TPC is empty!" << G4endl;
-	}
-*/
   // ------------- Volumes --------------
 
     // The experimental Hall
@@ -193,14 +214,14 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 
 	// walls volume
 	G4Tubs* wall = new G4Tubs("wall", base_radius, base_radius+steel_thickness, cylinder_length, 0. * deg, 360. * deg);
-	G4LogicalVolume* wall_log	= new G4LogicalVolume(wall, steel_mat, "wall", 0, 0, 0);
+	G4LogicalVolume* wall_log	= new G4LogicalVolume(wall, tef_mat, "wall", 0, 0, 0);
 	G4VPhysicalVolume* wall_phys = new G4PVPlacement(0, G4ThreeVector(), wall_log, "wall", expHall_log, false, 0, checkOverlaps);
 	wall_log  -> SetVisAttributes(lightgray);
 	// optical surface
 	G4OpticalSurface* op_wall = new G4OpticalSurface("wall_Surface");
 	G4LogicalSkinSurface* wall_Surface = new G4LogicalSkinSurface("wall_Surface", wall_log, op_wall);
 	G4MaterialPropertiesTable* wallST2 = new G4MaterialPropertiesTable();
-	wallST2->AddProperty("REFLECTIVITY",  ephoton_steel, reflectivity_steel, num_Rsteel);
+	wallST2->AddProperty("REFLECTIVITY",  ephoton_tef, reflectivity_tef, num_Rtef);
 	op_wall->SetMaterialPropertiesTable(wallST2);
 	op_wall->SetType(dielectric_metal);
 	op_wall->SetFinish(ground);

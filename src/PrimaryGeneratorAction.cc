@@ -46,7 +46,7 @@ PrimaryGeneratorAction::PrimaryGeneratorAction()
   G4int n_particle = 1;
   fParticleGun = new G4ParticleGun(n_particle);
 
-  G4double wavelength = 120 * nm;   // Ar scintillation (VUV)
+  G4double wavelength = 600 * nm;   // Ar scintillation (VUV)
   G4double energy = h_Planck * c_light / wavelength;
   G4ParticleTable* particleTable = G4ParticleTable::GetParticleTable();
   G4ParticleDefinition* particle = particleTable->FindParticle("opticalphoton");
@@ -79,15 +79,16 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
   G4double posX  = rho * std::cos(theta);
   G4double posY  = rho * std::sin(theta);
   G4double posZ  = (1-2* G4UniformRand()) * cylinder_length;
-  // horizontal trace crossing the gas volume:
-  //G4double posX  = (1-2* G4UniformRand()) * 2291;
-  //G4double posY  = 1000;
+  // source point (horizontal trace crossing the gas volume):
+  //G4double posX  = 0; //(1-2* G4UniformRand()) * 2291;
+  //G4double posY  = 0; //1000;
   //G4double posZ  = 0; 
   fParticleGun->SetParticlePosition(G4ThreeVector(posX, posY, posZ));
+  //G4cout << posX << ", " << posY << ", " << posZ << G4endl;
 
   // define momentum direction: isotropic and random
   theta = std::acos(1-2* G4UniformRand())*rad;    // x-z plane (0-2pi)
-  G4double phi   = G4UniformRand() * 360.0*deg;            // x-y plane
+  G4double phi   = G4UniformRand() * 360.0*deg;   // x-y plane
   G4double mx    = std::sin(theta) * std::cos(phi);
   G4double my    = std::sin(theta) * std::sin(phi);
   G4double mz    = std::cos(theta);

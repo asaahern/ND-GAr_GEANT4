@@ -103,7 +103,7 @@ void CathodeSD::EndOfEvent(G4HCofThisEvent*)
 
 	
 		std::ofstream file;
-		G4String name="xtrace_y"+ std::to_string(run->GetRunID()) +"_z2500.dat";
+		G4String name="output_"+ std::to_string(run->GetRunID()) +".dat";
           
     	for ( G4int i=0; i<nofHits; i++ ) {
 		 	  		 

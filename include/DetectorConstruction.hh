@@ -56,9 +56,6 @@ class DetectorConstruction : public G4VUserDetectorConstruction
     G4double cylinder_length;
 
     G4double cath_thickness;
-
-    G4bool disable_gas_pure;
-    G4bool disable_gas_mix;
 };
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
